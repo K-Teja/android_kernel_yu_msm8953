@@ -4557,7 +4557,7 @@ static int get_ipa_dts_configuration(struct platform_device *pdev,
 		ipa_drv_res->ipa_rx_polling_sleep_msec = ONE_MSEC;
 		IPADBG("using default polling timeout of 1MSec\n");
 	} else {
-		IPADBG(": found ipa_drv_res->ipa_rx_polling_sleep_sec = %d",
+		IPADBG(": found ipa_drv_res->ipa_rx_polling_sleep_msec = %d",
 			ipa_drv_res->ipa_rx_polling_sleep_msec);
 	}
 
