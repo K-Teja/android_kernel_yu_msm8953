@@ -2133,6 +2133,13 @@ static void msm_isp_get_camif_update_state_and_halt(
 		if (stream_info->stream_src  < RDI_INTF_0)
 			pix_stream_cnt++;
 	}
+	/*Patch, xieyue.wt, MODIFY, 2016-07-12, reslove platform bug: can't get raw picture by SnapdragonCamera.apk*/
+	if (vfe_dev->axi_data.num_active_stream == stream_cfg_cmd->num_streams 
+		&& (stream_cfg_cmd->cmd == STOP_STREAM || 
+		stream_cfg_cmd->cmd == STOP_IMMEDIATELY)) 
+		*halt = 1; 
+	else 
+		*halt = 0; 
 
 	if (vfe_dev->axi_data.num_active_stream == stream_cfg_cmd->num_streams
 		&& (stream_cfg_cmd->cmd == STOP_STREAM ||
@@ -2148,16 +2155,20 @@ static void msm_isp_get_camif_update_state_and_halt(
 			*camif_update = ENABLE_CAMIF;
 		else if (cur_pix_stream_cnt &&
 			(cur_pix_stream_cnt - pix_stream_cnt) == 0 &&
-			(stream_cfg_cmd->cmd == STOP_STREAM ||
-			stream_cfg_cmd->cmd == STOP_IMMEDIATELY)) {
-			if (*halt)
-				*camif_update = DISABLE_CAMIF_IMMEDIATELY;
-			else
-				*camif_update = DISABLE_CAMIF;
-		} else
+			(stream_cfg_cmd->cmd == STOP_STREAM || 
+			stream_cfg_cmd->cmd == STOP_IMMEDIATELY)) { 
+			if (*halt) 
+				*camif_update = DISABLE_CAMIF_IMMEDIATELY; 
+			else 
+				*camif_update = DISABLE_CAMIF; 
+		} 
+
+		else
 			*camif_update = NO_UPDATE;
 	} else
 		*camif_update = NO_UPDATE;
+
+
 }
 
 static void msm_isp_update_camif_output_count(
@@ -2938,17 +2949,25 @@ static int msm_isp_stop_axi_stream(struct vfe_device *vfe_dev,
 				clear_wm_irq_mask(vfe_dev, stream_info);
 
 		stream_info->state = STOP_PENDING;
-		if (!halt && !ext_read &&
-			!(stream_info->stream_type == BURST_STREAM &&
-			stream_info->runtime_num_burst_capture == 0))
-			wait_for_complete_for_this_stream = 1;
+			/* We dont get reg update IRQ for raw snapshot
+			 * so frame skip cant be ocnfigured
+			*/
+		if (!halt && !ext_read && 
 
-		ISP_DBG("%s: stream 0x%x, vfe %d camif %d halt %d wait %d\n",
-			__func__,
-			stream_info->stream_id,
-			vfe_dev->pdev->id,
-			camif_update,
-			halt,
+		!(stream_info->stream_type == BURST_STREAM && 
+		stream_info->runtime_num_burst_capture == 0)) 
+			/* Configure AXI writemasters to stop immediately
+			 * since for burst case, write masters already skip
+			 * all frames.
+			 */
+				wait_for_complete_for_this_stream = 1;
+		
+		ISP_DBG("%s: stream 0x%x, vfe %d camif %d halt %d wait %d\n", 
+		__func__, 
+		stream_info->stream_id, 
+		vfe_dev->pdev->id, 
+		camif_update, 
+		halt, 
 			wait_for_complete_for_this_stream);
 
 		intf = SRC_TO_INTF(stream_info->stream_src);
