@@ -48,11 +48,7 @@
 		modem_mem: modem_region@0 {
 			compatible = "removed-dma-pool";
 			no-map-fixup;
-<<<<<<< HEAD
-			reg = <0x0 0x86c00000 0x0 0x6a00000>;
-=======
 			reg = <0x0 0x86c00000 0x0 0x5600000>;     //8C200000
->>>>>>> db83bce3c3e7... ARM: dts: Import device tree for YU5551
 		};
 
 		adsp_fw_mem: adsp_fw_region@0 {
