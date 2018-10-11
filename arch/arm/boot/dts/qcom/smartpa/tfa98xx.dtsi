@@ -1,0 +1,9 @@
+&i2c_8 {
+    tfa98xx: tfa98xx@34 {
+        compatible = "nxp,tfa98xx";
+        reg = <0x34>;                   /* customize. */
+        reset-gpio = <&tlmm 91 0x01>;   /* customize, if needed. */
+        irq-gpio = <&tlmm 90 0x01>;     /* customize, if needed. */
+        status = "okay";
+    };
+};

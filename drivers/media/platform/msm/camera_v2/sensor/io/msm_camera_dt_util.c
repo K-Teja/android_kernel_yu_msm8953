@@ -1089,6 +1089,47 @@ int msm_camera_init_gpio_pin_tbl(struct device_node *of_node,
 	} else {
 		rc = 0;
 	}
+		rc = of_property_read_u32(of_node, "qcom,gpio-custom3", &val);
+	if (rc != -EINVAL) {
+		if (rc < 0) {
+			pr_err("%s:%d read qcom,gpio-custom3 failed rc %d\n",
+				__func__, __LINE__, rc);
+			goto ERROR;
+		} else if (val >= gpio_array_size) {
+			pr_err("%s:%d qcom,gpio-custom3 invalid %d\n",
+				__func__, __LINE__, val);
+			rc = -EINVAL;
+			goto ERROR;
+		}
+		gconf->gpio_num_info->gpio_num[SENSOR_GPIO_CUSTOM3] =
+			gpio_array[val];
+		gconf->gpio_num_info->valid[SENSOR_GPIO_CUSTOM3] = 1;
+		CDBG("%s qcom,gpio-custom3 %d\n", __func__,
+			gconf->gpio_num_info->gpio_num[SENSOR_GPIO_CUSTOM3]);
+	} else {
+		rc = 0;
+	}
+
+	rc = of_property_read_u32(of_node, "qcom,gpio-custom4", &val);
+	if (rc != -EINVAL) {
+		if (rc < 0) {
+			pr_err("%s:%d read qcom,gpio-custom4 failed rc %d\n",
+				__func__, __LINE__, rc);
+			goto ERROR;
+		} else if (val >= gpio_array_size) {
+			pr_err("%s:%d qcom,gpio-custom4 invalid %d\n",
+				__func__, __LINE__, val);
+			rc = -EINVAL;
+			goto ERROR;
+		}
+		gconf->gpio_num_info->gpio_num[SENSOR_GPIO_CUSTOM4] =
+			gpio_array[val];
+		gconf->gpio_num_info->valid[SENSOR_GPIO_CUSTOM4] = 1;
+		CDBG("%s qcom,gpio-custom4 %d\n", __func__,
+			gconf->gpio_num_info->gpio_num[SENSOR_GPIO_CUSTOM4]);
+	} else {
+		rc = 0;
+	}
 
 	return rc;
 

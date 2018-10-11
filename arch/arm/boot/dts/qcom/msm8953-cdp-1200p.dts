@@ -88,23 +88,6 @@
 	      };
 };
 
-&pm8953_mpps {
-	mpp@a300 {
-		/* MPP4 - PWM config */
-		qcom,mode = <1>; /* AIN input */
-		qcom,invert = <1>; /* Enable MPP */
-		qcom,master-en = <1>;
-		qcom,src-sel = <0>; /* Function constant */
-		qcom,vin-sel = <0>;
-	};
-};
-
-&pm8953_vadc {
-	chan@13 {
-		status = "disabled";
-	};
-};
-
 &i2c_3 {
 	status = "okay";
 	focaltech@38 {

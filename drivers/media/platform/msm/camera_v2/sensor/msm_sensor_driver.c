@@ -17,7 +17,6 @@
 #include "camera.h"
 #include "msm_cci.h"
 #include "msm_camera_dt_util.h"
-#include <linux/hardware_info.h>
 
 /* Logging macro */
 #undef CDBG
@@ -634,6 +633,9 @@ static void msm_sensor_fill_sensor_info(struct msm_sensor_ctrl_t *s_ctrl,
 	strlcpy(entity_name, s_ctrl->msm_sd.sd.entity.name, MAX_SENSOR_NAME);
 }
 
+
+extern int main_module_id;
+extern int sub_module_id;
 /* static function definition */
 int32_t msm_sensor_driver_probe(void *setting,
 	struct msm_sensor_info_t *probed_info, char *entity_name)
@@ -748,6 +750,33 @@ int32_t msm_sensor_driver_probe(void *setting,
 		rc = -EINVAL;
 		goto free_slave_info;
 	}
+
+
+	if (!strcmp(slave_info->sensor_name, "imx298")) {
+		if (main_module_id != 1) {
+			pr_err("failed: main_module_id %d, sensor is not %s", main_module_id, slave_info->sensor_name);
+			rc = -EINVAL;
+			goto free_slave_info;
+		}
+	} else if (!strcmp(slave_info->sensor_name, "ov13855_f13v08b")) {
+		if (sub_module_id != 1) {
+			pr_err("failed: main_module_id %d, sensor is not %s", sub_module_id, slave_info->sensor_name);
+			rc = -EINVAL;
+			goto free_slave_info;
+		}
+	}
+	else if (!strcmp(slave_info->sensor_name, "imx258")) {
+		printk("camera sensor probe %s no eeprom\n", slave_info->sensor_name);	
+	}
+	else if (!strcmp(slave_info->sensor_name, "imx258_fisheye")) {
+		printk("camera sensor probe %s no eeprom\n", slave_info->sensor_name);	
+	}
+	else {
+		pr_err("sensor name is %s, is nothing to do", slave_info->sensor_name);
+		rc = -EINVAL;
+		goto free_slave_info;
+	}
+	printk("camera sensor probe %s\n", slave_info->sensor_name);
 
 	/* Extract s_ctrl from camera id */
 	s_ctrl = g_sctrl[slave_info->camera_id];
@@ -954,8 +983,6 @@ CSID_TG:
 	s_ctrl->sensordata->cam_slave_info = slave_info;
 
 	msm_sensor_fill_sensor_info(s_ctrl, probed_info, entity_name);
-	hardwareinfo_set_prop(probed_info->position==BACK_CAMERA_B
-						?HARDWARE_BACK_CAM:HARDWARE_FRONT_CAM,probed_info->sensor_name);
 
 	return rc;
 

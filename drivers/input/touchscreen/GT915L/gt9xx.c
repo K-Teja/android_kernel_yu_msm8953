@@ -37,6 +37,7 @@ static const char *goodix_ts_name = "goodix-ts";
 static const char *goodix_input_phys = "input/ts";
 static struct workqueue_struct *goodix_wq;
 struct i2c_client * i2c_connect_client = NULL; 
+struct i2c_client *i2c_client_point = NULL;
 /*
 int gtp_rst_gpio;
 int gtp_int_gpio;
@@ -203,7 +204,6 @@ const char gtp_gesture_type[]=GTP_GESTURE_TPYE_STR;
 static const char gtp_gesture_support_flag=GTP_GESTURE_SUPPORT_ONOFF;
 static const char gtp_verson[] =GTP_PROC_DRIVER_VERSION;
 static  char gtp_gesture_support_flag_changed= 0;
-struct i2c_client *i2c_client_point = NULL;
 
 
 static ssize_t proc_gesture_data_read(struct file *file, char __user *buffer, size_t count, loff_t *ppos)
@@ -1494,11 +1494,11 @@ void gtp_reset_guitar(struct i2c_client *client, s32 ms)
     GTP_DEBUG_FUNC();
     GTP_INFO("Guitar reset");
     GTP_GPIO_OUTPUT(gtp_rst_gpio, 0);   // begin select I2C slave addr
-    usleep(ms*20);                         // T2: > 100us
+    msleep(ms);                         // T2: > 100us
     // HIGH: 0x28/0x29, LOW: 0xBA/0xBB
     GTP_GPIO_OUTPUT(gtp_int_gpio, client->addr == 0x14);
 
-    usleep(200);                          // T3: > 100us
+    msleep(2);                          // T3: > 100us
     GTP_GPIO_OUTPUT(gtp_rst_gpio, 1);
 
     msleep(6);                         //T4:>5ms
@@ -1830,7 +1830,7 @@ static s32 gtp_init_panel(struct goodix_ts_data *ts)
         return -1;
     }
     GTP_INFO("Sensor_ID: %d", sensor_id);
-    tp_sensor_id = sensor_id;
+    //tp_sensor_id = sensor_id;
 
 	/* parse config data*/
 //Modify, wangdongbo.wt_20160527

@@ -301,9 +301,9 @@
 	};
 
 	int_codec: sound {
-		//status = "disabled";
+		status = "disabled";
 		compatible = "qcom,msm8952-audio-codec";
-		qcom,model = "msm8953-snd-card-mtp";
+		qcom,model = "msm8952-snd-card-mtp";
 		reg = <0xc051000 0x4>,
 		      <0xc051004 0x4>,
 		      <0xc055000 0x4>,
@@ -313,21 +313,21 @@
 			    "csr_gp_io_lpaif_pri_pcm_pri_mode_muxsel",
 			    "csr_gp_io_mux_quin_ctl";
 
-		qcom,msm-ext-pa = "primary";
+		qcom,msm-ext-pa = "quaternary";
 		qcom,msm-mclk-freq = <9600000>;
-		qcom,msm-mbhc-hphl-swh = <1>;
+		qcom,msm-mbhc-hphl-swh = <0>;
 		qcom,msm-mbhc-gnd-swh = <0>;
-		qcom,msm-hs-micbias-type = "internal";
+		qcom,msm-hs-micbias-type = "external";
 		qcom,msm-micbias1-ext-cap;
 		qcom,audio-routing =
 			"RX_BIAS", "MCLK",
 			"SPK_RX_BIAS", "MCLK",
 			"INT_LDO_H", "MCLK",
 			"MIC BIAS External", "Handset Mic",
-			"MIC BIAS Internal2", "Headset Mic",
+			"MIC BIAS External2", "Headset Mic",
 			"MIC BIAS External", "Secondary Mic",
 			"AMIC1", "MIC BIAS External",
-			"AMIC2", "MIC BIAS Internal2",
+			"AMIC2", "MIC BIAS External2",
 			"AMIC3", "MIC BIAS External",
 			"WSA_SPK OUT", "VDD_WSA_SWITCH",
 			"SpkrMono WSA_IN", "WSA_SPK OUT";
@@ -358,28 +358,28 @@
 			"quin_us_eu_gpio_pri_i2s_act";
 		pinctrl-0 = <&cdc_pdm_lines_sus
 				&cdc_pdm_lines_2_sus &cross_conn_det_sus
-				&pri_tlmm_lines_sus &pri_tlmm_ws_sus>;
+				&pri_tlmm_ws_sus>;
 		pinctrl-1 = <&cdc_pdm_lines_act
 				&cdc_pdm_lines_2_act &cross_conn_det_sus
-				&pri_tlmm_lines_sus &pri_tlmm_ws_sus>;
+				&pri_tlmm_ws_sus>;
 		pinctrl-2 = <&cdc_pdm_lines_sus
 				&cdc_pdm_lines_2_sus &cross_conn_det_act
-				&pri_tlmm_lines_sus &pri_tlmm_ws_sus>;
+				&pri_tlmm_ws_sus>;
 		pinctrl-3 = <&cdc_pdm_lines_act
 				&cdc_pdm_lines_2_act &cross_conn_det_act
-				&pri_tlmm_lines_sus &pri_tlmm_ws_sus>;
+				&pri_tlmm_ws_sus>;
 		pinctrl-4 = <&cdc_pdm_lines_sus
 				&cdc_pdm_lines_2_sus &cross_conn_det_sus
-				&pri_tlmm_lines_act &pri_tlmm_ws_act>;
+				&pri_tlmm_ws_act>;
 		pinctrl-5 = <&cdc_pdm_lines_act
 				&cdc_pdm_lines_2_act &cross_conn_det_sus
-				&pri_tlmm_lines_act &pri_tlmm_ws_act>;
+				&pri_tlmm_ws_act>;
 		pinctrl-6 = <&cdc_pdm_lines_sus
 				&cdc_pdm_lines_2_sus &cross_conn_det_act
-				&pri_tlmm_lines_act &pri_tlmm_ws_act>;
+				&pri_tlmm_ws_act>;
 		pinctrl-7 = <&cdc_pdm_lines_act
 				&cdc_pdm_lines_2_act &cross_conn_det_act
-				&pri_tlmm_lines_act &pri_tlmm_ws_act>;
+				&pri_tlmm_ws_act>;
 
 		asoc-platform = <&pcm0>, <&pcm1>, <&pcm2>, <&voip>, <&voice>,
 				<&loopback>, <&compress>, <&hostless>,
@@ -482,13 +482,13 @@
 			"quin_act",
 			"us_eu_gpio_act",
 			"quin_us_eu_gpio_act";
-		pinctrl-0 = <&pri_tlmm_lines_sus &pri_tlmm_ws_sus
+		pinctrl-0 = <&pri_tlmm_ws_sus
 						&cross_conn_det_sus>;
-		pinctrl-1 = <&pri_tlmm_lines_act &pri_tlmm_ws_act
+		pinctrl-1 = <&pri_tlmm_ws_act
 						&cross_conn_det_sus>;
-		pinctrl-2 = <&pri_tlmm_lines_sus &pri_tlmm_ws_sus
+		pinctrl-2 = <&pri_tlmm_ws_sus
 						&cross_conn_det_act>;
-		pinctrl-3 = <&pri_tlmm_lines_act &pri_tlmm_ws_act
+		pinctrl-3 = <&pri_tlmm_ws_act
 						&cross_conn_det_act>;
 
 		qcom,msm-mbhc-hphl-swh = <0>;

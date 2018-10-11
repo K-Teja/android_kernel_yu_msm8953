@@ -79,7 +79,7 @@
 #define GTP_WITH_PEN          0
 #define GTP_PEN_HAVE_BUTTON   0    // active pen has buttons, function together with GTP_WITH_PEN
 
-#define GTP_GESTURE_WAKEUP    1    // gesture wakeup
+#define GTP_GESTURE_WAKEUP    0    // gesture wakeup
 #if GTP_GESTURE_WAKEUP
 #define GTP_GESTURE_TPYE_STR  "RLUDKcemosvwz^"
 #define GTP_GESTURE_SUPPORT_ONOFF   'Y' // 'N' is off
@@ -92,7 +92,7 @@
 #define GTP_GLOVE_SUPPORT_ONOFF  'Y'    // 'N' is off
 #endif
 
-#define WT_ADD_CTP_INFO	1
+#define WT_ADD_CTP_INFO	0
 
 #define GTP_DEBUG_ON          0//remove TP debug log by wangxun
 #define GTP_DEBUG_ARRAY_ON    0
