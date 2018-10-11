@@ -48,14 +48,6 @@
 
 static int get_cal_path(int path_type);
 
-#define EC_PORT_ID_PRIMARY_MI2S_TX    1
-#define EC_PORT_ID_SECONDARY_MI2S_TX  2
-#define EC_PORT_ID_TERTIARY_MI2S_TX   3
-#define EC_PORT_ID_QUATERNARY_MI2S_TX 4
-#define EC_PORT_ID_SLIMBUS_1_TX       5
-//bug193574 Wchat hungup
-#define EC_PORT_ID_QUIN_MI2S_TX  6
-
 static struct mutex routing_lock;
 
 static struct cal_type_data *cal_data;
@@ -66,7 +58,10 @@ static int pri_mi2s_switch_enable;
 static int sec_mi2s_switch_enable;
 static int tert_mi2s_switch_enable;
 static int quat_mi2s_switch_enable;
-static int quin_mi2s_switch_enable;
+/* Add "quat_mi2s_switch_enable_for_fm" switch status flag for
+ * play-fm speaker usecase, routing fm signal form pri to quat
+ * PRI_MI2S_DL_HL -> QUAT_MI2S_RX_DL_HL_FOR_FM -> QUAT_MI2S_RX */
+static int quat_mi2s_switch_enable_for_fm;
 static int fm_pcmrx_switch_enable;
 static int lsm_mux_slim_port;
 static int slim0_rx_aanc_fb_port;
@@ -1700,19 +1695,20 @@ static int msm_routing_put_quat_mi2s_switch_mixer(
 	return 1;
 }
 
-/*---------zhangjianming.wt .add for fm speaker no sound --------------*/
-
-static int msm_routing_get_quin_mi2s_switch_mixer(
+/* Add "QUAT_MI2S_RX_DL_HL_FOR_FM Switch" switch control for
+ * play-fm speaker usecase, routing fm signal form pri to quat
+ * PRI_MI2S_DL_HL -> QUAT_MI2S_RX_DL_HL_FOR_FM -> QUAT_MI2S_RX */
+static int msm_routing_get_quat_mi2s_switch_mixer_for_fm(
 				struct snd_kcontrol *kcontrol,
 				struct snd_ctl_elem_value *ucontrol)
 {
-	ucontrol->value.integer.value[0] = quin_mi2s_switch_enable;
-	pr_debug("%s: QUIN MI2S Switch enable %ld\n", __func__,
+	ucontrol->value.integer.value[0] = quat_mi2s_switch_enable_for_fm;
+	pr_debug("%s: QUAT MI2S Switch enable for fm, value=%ld\n", __func__,
 		ucontrol->value.integer.value[0]);
 	return 0;
 }
 
-static int msm_routing_put_quin_mi2s_switch_mixer(
+static int msm_routing_put_quat_mi2s_switch_mixer_for_fm(
 				struct snd_kcontrol *kcontrol,
 				struct snd_ctl_elem_value *ucontrol)
 {
@@ -1721,7 +1717,7 @@ static int msm_routing_put_quin_mi2s_switch_mixer(
 	struct snd_soc_dapm_widget *widget = wlist->widgets[0];
 	struct snd_soc_dapm_update *update = NULL;
 
-	pr_debug("%s: QUIN MI2S Switch enable %ld\n", __func__,
+	pr_debug("%s: QUAT MI2S Switch enable for fm, value=%ld\n", __func__,
 			ucontrol->value.integer.value[0]);
 	if (ucontrol->value.integer.value[0])
 		snd_soc_dapm_mixer_update_power(widget->dapm, kcontrol, 1,
@@ -1729,11 +1725,10 @@ static int msm_routing_put_quin_mi2s_switch_mixer(
 	else
 		snd_soc_dapm_mixer_update_power(widget->dapm, kcontrol, 0,
 						update);
-	quin_mi2s_switch_enable = ucontrol->value.integer.value[0];
+	quat_mi2s_switch_enable_for_fm = ucontrol->value.integer.value[0];
 	return 1;
 }
-/*---------zhangjianming.wt .add for fm speaker no sound --------------*/
-
+/* end modify */
 
 static int msm_routing_get_fm_pcmrx_switch_mixer(struct snd_kcontrol *kcontrol,
 				struct snd_ctl_elem_value *ucontrol)
@@ -2207,14 +2202,8 @@ static int msm_routing_ext_ec_put(struct snd_kcontrol *kcontrol,
 	case EXT_EC_REF_QUAT_MI2S_TX:
 		ext_ec_ref_port_id = AFE_PORT_ID_QUATERNARY_MI2S_TX;
 		break;
-		//bug193574 Wchat hungup
-	case EC_PORT_ID_QUIN_MI2S_TX:
-		msm_route_ext_ec_ref = AFE_PORT_ID_QUINARY_MI2S_TX;
-		state = true;
-		break;
-	case EC_PORT_ID_SLIMBUS_1_TX:
-		msm_route_ext_ec_ref = SLIMBUS_1_TX;
-		state = true;
+	case EXT_EC_REF_QUIN_MI2S_TX:
+		ext_ec_ref_port_id = AFE_PORT_ID_QUINARY_MI2S_TX;
 		break;
 	case EXT_EC_REF_SLIM_1_TX:
 		ext_ec_ref_port_id = SLIMBUS_1_TX;
@@ -2238,13 +2227,14 @@ static int msm_routing_ext_ec_put(struct snd_kcontrol *kcontrol,
 	}
 	return ret;
 }
-		//bug193574 Wchat hungup
+
 static const char * const ext_ec_ref_rx[] = {"NONE", "PRI_MI2S_TX",
-					     "SEC_MI2S_TX", "TERT_MI2S_TX",
-					     "QUAT_MI2S_TX", "SLIM_1_TX","QUIN_MI2S_TX"};
+					"SEC_MI2S_TX", "TERT_MI2S_TX",
+					"QUAT_MI2S_TX", "QUIN_MI2S_TX",
+					"SLIM_1_TX"};
 
 static const struct soc_enum msm_route_ext_ec_ref_rx_enum[] = {
-	SOC_ENUM_SINGLE_EXT(7, ext_ec_ref_rx),
+	SOC_ENUM_SINGLE_EXT(ARRAY_SIZE(ext_ec_ref_rx), ext_ec_ref_rx),
 };
 
 static const struct snd_kcontrol_new voc_ext_ec_mux =
@@ -4509,14 +4499,12 @@ static const struct snd_kcontrol_new quin_mi2s_rx_voice_mixer_controls[] = {
 	SOC_SINGLE_EXT("QCHAT", MSM_BACKEND_DAI_QUINARY_MI2S_RX,
 	MSM_FRONTEND_DAI_QCHAT, 1, 0, msm_routing_get_voice_mixer,
 	msm_routing_put_voice_mixer),
-	  /*-----------audio bring up ,zhangjianming.wt -------------------*/
 	SOC_SINGLE_EXT("VoiceMMode1", MSM_BACKEND_DAI_QUINARY_MI2S_RX,
 	MSM_FRONTEND_DAI_VOICEMMODE1, 1, 0, msm_routing_get_voice_mixer,
 	msm_routing_put_voice_mixer),
 	SOC_SINGLE_EXT("VoiceMMode2", MSM_BACKEND_DAI_QUINARY_MI2S_RX,
 	MSM_FRONTEND_DAI_VOICEMMODE2, 1, 0, msm_routing_get_voice_mixer,
 	msm_routing_put_voice_mixer),
-	  /*-----------audio bring up ,zhangjianming.wt -------------------*/
 };
 
 static const struct snd_kcontrol_new afe_pcm_rx_voice_mixer_controls[] = {
@@ -5289,32 +5277,6 @@ static const struct snd_kcontrol_new quat_mi2s_rx_port_mixer_controls[] = {
 	MSM_BACKEND_DAI_QUATERNARY_MI2S_TX, 1, 0, msm_routing_get_port_mixer,
 	msm_routing_put_port_mixer),
 };
-/*-----------audio bring up ,zhangjianming.wt -------------------*/
-static const struct snd_kcontrol_new quin_mi2s_rx_port_mixer_controls[] = {
-	SOC_SINGLE_EXT("PRI_MI2S_TX", MSM_BACKEND_DAI_QUINARY_MI2S_RX,
-	MSM_BACKEND_DAI_PRI_MI2S_TX, 1, 0, msm_routing_get_port_mixer,
-	msm_routing_put_port_mixer),
-	SOC_SINGLE_EXT("TERT_MI2S_TX", MSM_BACKEND_DAI_QUINARY_MI2S_RX,
-	MSM_BACKEND_DAI_TERTIARY_MI2S_TX, 1, 0, msm_routing_get_port_mixer,
-	msm_routing_put_port_mixer),
-	SOC_SINGLE_EXT("INTERNAL_FM_TX", MSM_BACKEND_DAI_QUINARY_MI2S_RX,
-	MSM_BACKEND_DAI_INT_FM_TX, 1, 0, msm_routing_get_port_mixer,
-	msm_routing_put_port_mixer),
-	SOC_SINGLE_EXT("AUX_PCM_UL_TX", MSM_BACKEND_DAI_QUINARY_MI2S_RX,
-	MSM_BACKEND_DAI_AUXPCM_TX, 1, 0, msm_routing_get_port_mixer,
-	msm_routing_put_port_mixer),
-	SOC_SINGLE_EXT("SLIM_0_TX", MSM_BACKEND_DAI_QUINARY_MI2S_RX,
-	MSM_BACKEND_DAI_SLIMBUS_0_TX, 1, 0, msm_routing_get_port_mixer,
-	msm_routing_put_port_mixer),
-	SOC_SINGLE_EXT("SEC_MI2S_TX", MSM_BACKEND_DAI_QUINARY_MI2S_RX,
-	MSM_BACKEND_DAI_SECONDARY_MI2S_TX, 1, 0, msm_routing_get_port_mixer,
-	msm_routing_put_port_mixer),
-	SOC_SINGLE_EXT("QUIN_MI2S_TX", MSM_BACKEND_DAI_QUINARY_MI2S_RX,
-	MSM_BACKEND_DAI_QUINARY_MI2S_TX, 1, 0, msm_routing_get_port_mixer,
-	msm_routing_put_port_mixer),
-};
-/*-----------audio bring up ,zhangjianming.wt -------------------*/
-
 
 static const struct snd_kcontrol_new tert_tdm_rx_0_port_mixer_controls[] = {
 	SOC_SINGLE_EXT("PRI_MI2S_TX", MSM_BACKEND_DAI_TERT_TDM_RX_0,
@@ -5937,12 +5899,14 @@ static const struct snd_kcontrol_new quat_mi2s_rx_switch_mixer_controls =
 	SOC_SINGLE_EXT("Switch", SND_SOC_NOPM,
 	0, 1, 0, msm_routing_get_quat_mi2s_switch_mixer,
 	msm_routing_put_quat_mi2s_switch_mixer);
-/*---------zhangjianming.wt .add for fm speaker no sound --------------*/
-static const struct snd_kcontrol_new quin_mi2s_rx_switch_mixer_controls =
+
+	/* Add "QUAT_MI2S_RX_DL_HL_FOR_FM Switch" switch control for
+	 * play-fm speaker usecase, routing fm signal form pri to quat
+	 * PRI_MI2S_DL_HL -> QUAT_MI2S_RX_DL_HL_FOR_FM -> QUAT_MI2S_RX */
+static const struct snd_kcontrol_new quat_mi2s_rx_switch_mixer_controls_for_fm =
 	SOC_SINGLE_EXT("Switch", SND_SOC_NOPM,
-	0, 1, 0, msm_routing_get_quin_mi2s_switch_mixer,
-	msm_routing_put_quin_mi2s_switch_mixer);
-/*---------zhangjianming.wt .add for fm speaker no sound --------------*/
+	0, 1, 0, msm_routing_get_quat_mi2s_switch_mixer_for_fm,
+	msm_routing_put_quat_mi2s_switch_mixer_for_fm);
 
 static const struct snd_kcontrol_new hfp_pri_aux_switch_mixer_controls =
 	SOC_SINGLE_EXT("Switch", SND_SOC_NOPM,
@@ -7337,8 +7301,11 @@ static const struct snd_soc_dapm_widget msm_qdsp6_widgets[] = {
 				&tert_mi2s_rx_switch_mixer_controls),
 	SND_SOC_DAPM_SWITCH("QUAT_MI2S_RX_DL_HL", SND_SOC_NOPM, 0, 0,
 				&quat_mi2s_rx_switch_mixer_controls),
-	SND_SOC_DAPM_SWITCH("QUIN_MI2S_RX_DL_HL", SND_SOC_NOPM, 0, 0,
-					&quin_mi2s_rx_switch_mixer_controls),
+	/* Add "QUAT_MI2S_RX_DL_HL_FOR_FM Switch" switch control for
+	 * play-fm speaker usecase, routing fm signal form pri to quat
+	 * PRI_MI2S_DL_HL -> QUAT_MI2S_RX_DL_HL_FOR_FM -> QUAT_MI2S_RX */
+	SND_SOC_DAPM_SWITCH("QUAT_MI2S_RX_DL_HL_FOR_FM", SND_SOC_NOPM, 0, 0,
+				&quat_mi2s_rx_switch_mixer_controls_for_fm),
 	SND_SOC_DAPM_SWITCH("HFP_PRI_AUX_UL_HL", SND_SOC_NOPM, 0, 0,
 				&hfp_pri_aux_switch_mixer_controls),
 	SND_SOC_DAPM_SWITCH("HFP_AUX_UL_HL", SND_SOC_NOPM, 0, 0,
@@ -7603,10 +7570,6 @@ static const struct snd_soc_dapm_widget msm_qdsp6_widgets[] = {
 	SND_SOC_DAPM_MIXER("QUAT_MI2S_RX Port Mixer", SND_SOC_NOPM, 0, 0,
 	quat_mi2s_rx_port_mixer_controls,
 	ARRAY_SIZE(quat_mi2s_rx_port_mixer_controls)),
-	  /*-----------audio bring up ,zhangjianming.wt -------------------*/
-	SND_SOC_DAPM_MIXER("QUIN_MI2S_RX Port Mixer", SND_SOC_NOPM, 0, 0,
-	quin_mi2s_rx_port_mixer_controls,
-	ARRAY_SIZE(quin_mi2s_rx_port_mixer_controls)),
 	SND_SOC_DAPM_MIXER("TERT_TDM_RX_0 Port Mixer", SND_SOC_NOPM, 0, 0,
 	tert_tdm_rx_0_port_mixer_controls,
 	ARRAY_SIZE(tert_tdm_rx_0_port_mixer_controls)),
@@ -8504,13 +8467,13 @@ static const struct snd_soc_dapm_route intercon[] = {
 	{"QUIN_MI2S_RX_Voice Mixer", "Voice Stub", "VOICE_STUB_DL"},
 	{"QUIN_MI2S_RX_Voice Mixer", "Voice2 Stub", "VOICE2_STUB_DL"},
 	{"QUIN_MI2S_RX_Voice Mixer", "QCHAT", "QCHAT_DL"},
-	  /*-----------audio bring up ,zhangjianming.wt -------------------*/
 	{"QUIN_MI2S_RX_Voice Mixer", "VoiceMMode1", "VOICEMMODE1_DL"},
 	{"QUIN_MI2S_RX_Voice Mixer", "VoiceMMode2", "VOICEMMODE2_DL"},
-	  /*-----------audio bring up ,zhangjianming.wt -------------------*/
 	{"QUIN_MI2S_RX", NULL, "QUIN_MI2S_RX_Voice Mixer"},
-	//bug193574 Wchat hungup
-	{"VOC_EXT_EC MUX", "QUIN_MI2S_TX" , "QUIN_MI2S_TX"},
+
+	{"QUAT_TDM_RX_2_Voice Mixer", "VoiceMMode1", "VOICEMMODE1_DL"},
+	{"QUAT_TDM_RX_2", NULL, "QUAT_TDM_RX_2_Voice Mixer"},
+
 	{"VOC_EXT_EC MUX", "PRI_MI2S_TX" , "PRI_MI2S_TX"},
 	{"VOC_EXT_EC MUX", "SEC_MI2S_TX" , "SEC_MI2S_TX"},
 	{"VOC_EXT_EC MUX", "TERT_MI2S_TX" , "TERT_MI2S_TX"},
@@ -8766,12 +8729,13 @@ static const struct snd_soc_dapm_route intercon[] = {
 	{"TERT_MI2S_RX_DL_HL", "Switch", "TERT_MI2S_DL_HL"},
 	{"TERT_MI2S_RX", NULL, "TERT_MI2S_RX_DL_HL"},
 
+	/* Add "QUAT_MI2S_RX_DL_HL_FOR_FM Switch" switch control for
+	 * play-fm speaker usecase, routing fm signal form pri to quat
+	 * PRI_MI2S_DL_HL -> QUAT_MI2S_RX_DL_HL_FOR_FM -> QUAT_MI2S_RX */
+	{"QUAT_MI2S_RX_DL_HL_FOR_FM", "Switch", "PRI_MI2S_DL_HL"},
+	{"QUAT_MI2S_RX", NULL, "QUAT_MI2S_RX_DL_HL_FOR_FM"},
 	{"QUAT_MI2S_RX_DL_HL", "Switch", "QUAT_MI2S_DL_HL"},
 	{"QUAT_MI2S_RX", NULL, "QUAT_MI2S_RX_DL_HL"},
-/*---------zhangjianming.wt .add for fm speaker no sound --------------*/
-	{"QUIN_MI2S_RX_DL_HL", "Switch", "PRI_MI2S_DL_HL"},
-	{"QUIN_MI2S_RX", NULL, "QUIN_MI2S_RX_DL_HL"},
-/*---------zhangjianming.wt .add for fm speaker no sound --------------*/
 	{"MI2S_UL_HL", NULL, "TERT_MI2S_TX"},
 	{"TERT_MI2S_UL_HL", NULL, "TERT_MI2S_TX"},
 	{"SEC_I2S_RX", NULL, "SEC_I2S_DL_HL"},
@@ -9091,15 +9055,6 @@ static const struct snd_soc_dapm_route intercon[] = {
 	{"QUAT_MI2S_RX Port Mixer", "INTERNAL_FM_TX", "INT_FM_TX"},
 	{"QUAT_MI2S_RX Port Mixer", "AUX_PCM_UL_TX", "AUX_PCM_TX"},
 	{"QUAT_MI2S_RX", NULL, "QUAT_MI2S_RX Port Mixer"},
-       /*-----------audio bring up ,zhangjianming.wt -------------------*/
-	{"QUIN_MI2S_RX Port Mixer", "QUIN_MI2S_TX", "QUIN_MI2S_TX"},
-	{"QUIN_MI2S_RX Port Mixer", "TERT_MI2S_TX", "TERT_MI2S_TX"},
-	{"QUIN_MI2S_RX Port Mixer", "PRI_MI2S_TX", "PRI_MI2S_TX"},
-	{"QUIN_MI2S_RX Port Mixer", "SLIM_0_TX", "SLIMBUS_0_TX"},
-	{"QUIN_MI2S_RX Port Mixer", "INTERNAL_FM_TX", "INT_FM_TX"},
-	{"QUIN_MI2S_RX Port Mixer", "INTERNAL_BT_SCO_TX", "INT_BT_SCO_TX"},
-	{"QUIN_MI2S_RX", NULL, "QUIN_MI2S_RX Port Mixer"},
-	/*-----------audio bring up ,zhangjianming.wt -------------------*/
 
 	/* Backend Enablement */
 
