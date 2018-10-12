@@ -35,6 +35,7 @@ extern char Lcm_name[HARDWARE_MAX_ITEM_LONGTH]; //req  wuzhenzhen.wt 20140924 ad
 
 #define VSYNC_DELAY msecs_to_jiffies(17)
 
+bool is_Lcm_Present=false;
 extern bool is_Lcm_Present;//heming@wingtech.com,20140730, disable lcm backlight when lcm is not connected 
 
 DEFINE_LED_TRIGGER(bl_led_trigger);
