@@ -2205,10 +2205,6 @@ static int msm_routing_ext_ec_put(struct snd_kcontrol *kcontrol,
 		ext_ec_ref_port_id = AFE_PORT_ID_QUATERNARY_MI2S_TX;
 		break;
 		//bug193574 Wchat hungup
-	case EC_PORT_ID_QUIN_MI2S_TX:
-		msm_route_ext_ec_ref = AFE_PORT_ID_QUINARY_MI2S_TX;
-		state = true;
-		break;
 	case EC_PORT_ID_SLIMBUS_1_TX:
 		msm_route_ext_ec_ref = SLIMBUS_1_TX;
 		state = true;
