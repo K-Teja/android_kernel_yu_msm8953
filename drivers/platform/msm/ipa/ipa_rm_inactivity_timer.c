@@ -261,7 +261,7 @@ int ipa_rm_inactivity_timer_release_resource(
 	}
 	ipa_rm_it_handles[resource_name].work_in_progress = true;
 	ipa_rm_it_handles[resource_name].reschedule_work = false;
-	IPADBG("%s: setting delayed work\n", __func__);
+	IPA_RM_DBG_LOW("%s: setting delayed work\n", __func__);
 	queue_delayed_work(system_unbound_wq,
 			      &ipa_rm_it_handles[resource_name].work,
 			      ipa_rm_it_handles[resource_name].jiffies);
