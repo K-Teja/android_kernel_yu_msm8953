@@ -53,7 +53,7 @@ static struct pm_qos_request mdss_dsi_pm_qos_request;
 
 bool is_Lcm_Present = false;//heming@wingtech.com,20160301,disable lcm backlight when lcm is not connected
 
-static void mdss_dsi_pm_qos_add_request(void)
+static void mdss_dsi_pm_qos_add_request(struct mdss_dsi_ctrl_pdata *ctrl_pdata)
 {
 	struct irq_info *irq_info;
 
