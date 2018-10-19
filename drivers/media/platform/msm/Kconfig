@@ -44,8 +44,20 @@ config MSMB_CAMERA_DEBUG
 	---help---
 	  Enable printk() debug for msm camera 2.0
 
+menuconfig YU_DIR_CAMERA
+	bool "Yu MSM camera directory support"
+	depends on MSMB_CAMERA
+	---help---
+	  Say Y here to enable selecting the vendor yu camera driver
+	  directory to compile into the kernel.
+
 if MSMB_CAMERA
+if YU_DIR_CAMERA
+source "drivers/media/platform/msm/camera_v2_yu/Kconfig"
+endif
+if !YU_DIR_CAMERA
 source "drivers/media/platform/msm/camera_v2/Kconfig"
+endif
 endif # MSMB_CAMERA
 source "drivers/media/platform/msm/dvb/Kconfig"
 source "drivers/media/platform/msm/broadcast/Kconfig"
