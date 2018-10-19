@@ -47,7 +47,7 @@
 
 
 static int restart_mode;
-static void *restart_reason;
+static void *restart_reason, *dload_type_addr;
 static bool scm_pmic_arbiter_disable_supported;
 static bool scm_deassert_ps_hold_supported;
 /* Download mode master kill-switch */
@@ -55,15 +55,16 @@ static void __iomem *msm_ps_hold;
 static phys_addr_t tcsr_boot_misc_detect;
 static void scm_disable_sdi(void);
 
-#ifdef CONFIG_MSM_DLOAD_MODE
 /* Runtime could be only changed value once.
-* There is no API from TZ to re-enable the registers.
-* So the SDI cannot be re-enabled when it already by-passed.
+ * There is no API from TZ to re-enable the registers.
+ * So the SDI cannot be re-enabled when it already by-passed.
 */
+#ifdef WT_DLOAD_MODE_SUPPORT
 static int download_mode = 1;
 #else
-static const int download_mode;
+static int download_mode = 0;
 #endif
+static struct kobject dload_kobj;
 
 #ifdef CONFIG_MSM_DLOAD_MODE
 #define EDL_MODE_PROP "qcom,msm-imem-emergency_download_mode"
@@ -74,10 +75,11 @@ static void *dload_mode_addr;
 static bool dload_mode_enabled;
 static void *emergency_dload_mode_addr;
 static bool scm_dload_supported;
-static struct kobject dload_kobj;
-static void *dload_type_addr;
 
 static int dload_set(const char *val, struct kernel_param *kp);
+
+
+
 /* interface for exporting attributes */
 struct reset_attribute {
 	struct attribute        attr;
@@ -322,7 +324,9 @@ static void msm_restart_prepare(const char *cmd)
 			qpnp_pon_set_restart_reason(
 				PON_RESTART_REASON_KEYS_CLEAR);
 			__raw_writel(0x7766550a, restart_reason);
-		} else if (!strncmp(cmd, "oem-", 4)) {
+		} else if (!strncmp(cmd, "fastmmi", 7)){	
+			       __raw_writel(0x77665505, restart_reason);				
+		}else if (!strncmp(cmd, "oem-", 4)) {
 			unsigned long code;
 			int ret;
 			ret = kstrtoul(cmd + 4, 16, &code);
@@ -408,7 +412,6 @@ static void do_msm_poweroff(void)
 	return;
 }
 
-#ifdef CONFIG_MSM_DLOAD_MODE
 static ssize_t attr_show(struct kobject *kobj, struct attribute *attr,
 				char *buf)
 {
@@ -486,7 +489,6 @@ static struct attribute *reset_attrs[] = {
 static struct attribute_group reset_attr_group = {
 	.attrs = reset_attrs,
 };
-#endif
 
 static int msm_restart_probe(struct platform_device *pdev)
 {
